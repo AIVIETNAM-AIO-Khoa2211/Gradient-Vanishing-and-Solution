@@ -41,6 +41,10 @@ SEED = 42  # cố định để so sánh công bằng giữa các solution
 # ============================================================
 # WEIGHT INITIALIZATION
 # ============================================================
+# Chọn phương pháp khởi tạo:  "random" (để test), "xavier" (cho sigmoid/tanh), "he" (cho relu), "he_leaky"
+INIT_METHOD = "xavier"
+# thêm negative slope nếu dùng He Initialization nếu dùng LeakyReLU
+NEGATIVE_SLOPE = 0.01
 
 #Điền vào nếu có những tham số cố định của phương pháp khởi tạo trọng số (weight initialization) cần sử dụng.
 
