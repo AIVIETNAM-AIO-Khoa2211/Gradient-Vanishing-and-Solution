@@ -1,9 +1,9 @@
 import numpy as np
 
 class WeightInitializer:
-    def random_normal(fan_in, fan_out, scale=0.01, seed=None):
+    def random_normal(n_in, n_out, scale=0.01, seed=None):
         rng = np.random.default_rng(seed)
-        return rng.standard_normal((fan_out, fan_in)) * scale
+        return rng.standard_normal((n_out, n_in)) * scale
 
     def xavier_normal(n_in, n_out, seed=None):
         rng = np.random.default_rng(seed)
