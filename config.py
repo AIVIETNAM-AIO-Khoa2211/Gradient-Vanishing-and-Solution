@@ -48,10 +48,8 @@ SAVE_ACTIVATION_STATS = True   # lưu mean/variance activation theo layer
 # ============================================================
 # WEIGHT INITIALIZATION
 # ============================================================
-# Chọn phương pháp khởi tạo:  "random" (để test), "xavier" (cho sigmoid/tanh), "he" (cho relu), "he_leaky"
-INIT_METHOD = "xavier"
-# thêm negative slope nếu dùng He Initialization nếu dùng LeakyReLU
-NEGATIVE_SLOPE = 0.01
+initializer = WeightInitializer(self.layer_dims, method=INIT_METHOD, seed=self.seed)
+self.W, self.b = initializer.initialize()
 
 # ============================================================
 # BATCH NORMALIZATION
