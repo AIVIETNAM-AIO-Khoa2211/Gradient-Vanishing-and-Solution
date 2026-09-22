@@ -12,7 +12,7 @@ class WeightInitializer:
         self.rng = np.random.default_rng(seed)
 
     def random_normal(self, fan_in, fan_out, scale=0.01):
-        return self.rng.standard_normal((fan_out, fan_in)) * scale
+        return self.rng.standard_normal((n_out, n_in)) * scale
 
     def xavier_normal(self, n_in, n_out):
         std_dev = np.sqrt(2.0 / (n_in + n_out))
@@ -26,6 +26,26 @@ class WeightInitializer:
         std_dev = np.sqrt(2.0 / ((1.0 + negative_slope**2) * n_in))
         return self.rng.standard_normal((n_out, n_in)) * std_dev
     def initialize(self) -> tuple[dict, dict]:
+        W = {}
+        b = {}
+        L = len(self.layer_dims) - 1  # Số lượng lớp (không tính lớp input)
+        method_map = {
+            "random_normal": self.random_normal,
+            "xavier_normal": self.xavier_normal,
+            "he_normal": self.he_normal,
+            "he_normal_leaky": self.he_normal_leaky
+        }
+        if self.method not in method_map:
+            raise ValueError(f"Method khởi tạo '{self.method}' không tồn tại!")
+            
+        for i in range(1, L + 1):
+            n_in = self.layer_dims[i-1]
+            n_out = self.layer_dims[i]
+            
+            W[i] = method_map[self.method](n_in, n_out)
+            b[i] = np.zeros((n_out, 1))
+            
+        return W, b
         """
         Build the parameters for every weighted layer, using self.method.
 
