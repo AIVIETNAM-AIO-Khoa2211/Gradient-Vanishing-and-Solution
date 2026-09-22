@@ -28,7 +28,7 @@ class WeightInitializer:
     def initialize(self) -> tuple[dict, dict]:
         W = {}
         b = {}
-        L = len(self.layer_dims) - 1  # Số lượng lớp (không tính lớp input)
+        L = len(self.layer_dims) - 1  
         method_map = {
             "random_normal": self.random_normal,
             "xavier_normal": self.xavier_normal,
