@@ -1,5 +1,6 @@
 import numpy as np
 from activation import NonSaturatingActivations, SaturatingActivations
+from initializers import WeightInitializer
 
 
 def softmax(x: np.ndarray) -> np.ndarray:
@@ -23,6 +24,15 @@ def get_accuracy(predictions, Y):
 
 
 class NeuralNetwork:
+    ACTIVATION_MAP = {
+                "relu": NonSaturatingActivations.relu,
+                "leaky_relu": NonSaturatingActivations.leaky_relu,
+                "elu": NonSaturatingActivations.elu,
+                "sigmoid": SaturatingActivations.sigmoid,
+                "tanh": SaturatingActivations.tanh,
+                "none": lambda z: (z, lambda dout: dout),
+                }
+
     def __init__(self, layer_dims, activations=None, seed=42):
         self.layer_dims = layer_dims
         self.n_layer = len(layer_dims) - 1
@@ -54,22 +64,10 @@ class NeuralNetwork:
             self.b[i] = np.zeros((self.layer_dims[i], 1))
 
     def _activate(self, Z, name):
-        if name == "relu":
-            return NonSaturatingActivations.relu(Z)
-        elif name == "leaky_relu":
-            return NonSaturatingActivations.leaky_relu(Z)
-        elif name == "elu":
-            return NonSaturatingActivations.elu(Z)
-        elif name == "sigmoid":
-            return SaturatingActivations.sigmoid(Z)
-        elif name == "tanh":
-            return SaturatingActivations.tanh(Z)
-        elif name == "softmax":
-            return softmax(Z), None
-        elif name == "none":
-            return Z, lambda dout: dout
-        else:
+        """Apply the named HIDDEN-layer activation to Z. Not for softmax (output layer)."""
+        if name not in self._ACTIVATION_MAP:
             raise ValueError(f"Unknown activation function: {name}")
+        return self._ACTIVATION_MAP[name](Z)
 
     def _forward(self, X):
         Z = {}

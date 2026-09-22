@@ -48,8 +48,6 @@ SAVE_ACTIVATION_STATS = True   # lưu mean/variance activation theo layer
 # ============================================================
 # WEIGHT INITIALIZATION
 # ============================================================
-initializer = WeightInitializer(self.layer_dims, method=INIT_METHOD, seed=self.seed)
-self.W, self.b = initializer.initialize()
 
 # ============================================================
 # BATCH NORMALIZATION

@@ -11,7 +11,7 @@ class WeightInitializer:
         self.layer_dims = layer_dims
         self.rng = np.random.default_rng(seed)
 
-    def random_normal(self, fan_in, fan_out, scale=0.01):
+    def random_normal(self, n_in, n_out, scale=0.01):
         return self.rng.standard_normal((n_out, n_in)) * scale
 
     def xavier_normal(self, n_in, n_out):
@@ -26,6 +26,19 @@ class WeightInitializer:
         std_dev = np.sqrt(2.0 / ((1.0 + negative_slope**2) * n_in))
         return self.rng.standard_normal((n_out, n_in)) * std_dev
     def initialize(self) -> tuple[dict, dict]:
+        """
+        Build the parameters for every weighted layer, using self.method.
+
+        Returns (W, b):
+        W : dict {i: array of shape (layer_dims[i], layer_dims[i-1])}, i = 1..L
+        b : dict {i: np.zeros((layer_dims[i], 1))}, same keys as W
+        (L = len(layer_dims) - 1; there is no key 0.)
+
+        For layer i: fan_in = layer_dims[i-1], fan_out = layer_dims[i].
+        Loop i = 1..L in order, look up the method by name (self.method), and
+        call it with (fan_in, fan_out) so that all layers draw from the single
+        self.rng. Raise ValueError if self.method is not a valid name.
+        """
         W = {}
         b = {}
         L = len(self.layer_dims) - 1  
@@ -46,17 +59,3 @@ class WeightInitializer:
             b[i] = np.zeros((n_out, 1))
             
         return W, b
-        """
-        Build the parameters for every weighted layer, using self.method.
-
-        Returns (W, b):
-        W : dict {i: array of shape (layer_dims[i], layer_dims[i-1])}, i = 1..L
-        b : dict {i: np.zeros((layer_dims[i], 1))}, same keys as W
-        (L = len(layer_dims) - 1; there is no key 0.)
-
-        For layer i: fan_in = layer_dims[i-1], fan_out = layer_dims[i].
-        Loop i = 1..L in order, look up the method by name (self.method), and
-        call it with (fan_in, fan_out) so that all layers draw from the single
-        self.rng. Raise ValueError if self.method is not a valid name.
-        """
-        raise NotImplementedError
