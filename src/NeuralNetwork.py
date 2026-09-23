@@ -13,22 +13,23 @@ def softmax(x: np.ndarray) -> np.ndarray:
 
 
 class NeuralNetwork:
-    ACTIVATION_MAP = {
-                "relu": NonSaturatingActivations.relu,
-                "leaky_relu": NonSaturatingActivations.leaky_relu,
-                "elu": NonSaturatingActivations.elu,
-                "sigmoid": SaturatingActivations.sigmoid,
-                "tanh": SaturatingActivations.tanh,
-                "softmax": lambda z: (softmax(z), lambda dout: dout),  # softmax + cross-entropy
-                "none": lambda z: (z, lambda dout: dout),
-                }
 
     def __init__(self, layer_dims, activations=None, seed=42,Weights_initializer=None):
         self.layer_dims = layer_dims
         self.n_layer = len(layer_dims) - 1
         self.Weights_initializer = Weights_initializer
         self.seed = seed
-        
+
+        self._ACTIVATION_MAP = {
+                                "relu": NonSaturatingActivations.relu,
+                                "leaky_relu": NonSaturatingActivations.leaky_relu,
+                                "elu": NonSaturatingActivations.elu,
+                                "sigmoid": SaturatingActivations.sigmoid,
+                                "tanh": SaturatingActivations.tanh,
+                                "softmax": lambda z: (softmax(z), lambda dout: dout),  # softmax + cross-entropy
+                                "none": lambda z: (z, lambda dout: dout),
+                            }
+
         if activations is None:
             self.activations = ["none"] + ["relu"] * (self.n_layer - 1) + ["softmax"]
         elif len(activations) == self.n_layer:
@@ -89,7 +90,7 @@ class NeuralNetwork:
             self.b[i] -= learning_rate * grads["db"][i]
 
     def fit(self, X, y, X_val=None, y_val=None,
-            learning_rate=0.1, epochs=1000, batch_size=32, print_every=10):
+            learning_rate=0.1, epochs=1000, batch_size=64, print_every=10):
         n_samples = X.shape[1]  # feature-major: (features, samples)
 
         # Initialize OneHotEncoder for y labels

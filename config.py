@@ -29,6 +29,7 @@ LAYER_SIZES = [INPUT_DIM] + [HIDDEN_DIM] * (NUM_LAYERS - 1) + [OUTPUT_DIM]
 # index 1..NUM_LAYERS-1 = hidden activation (mặc định sigmoid để dễ gây vanishing)
 # index NUM_LAYERS      = output activation (softmax)
 ACTIVATIONS = [None] + ["sigmoid"] * (NUM_LAYERS - 1) + ["softmax"]
+PIPELINE1 = [None] + ["leaky_relu"] * (NUM_LAYERS - 1) + ["softmax"]
 
 # ============================================================
 # TRAINING HYPERPARAMETERS
