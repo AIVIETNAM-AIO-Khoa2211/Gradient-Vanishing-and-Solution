@@ -1,6 +1,8 @@
 import numpy as np
-from activation import NonSaturatingActivations, SaturatingActivations
-from initializers import WeightInitializer
+from src.activation import NonSaturatingActivations, SaturatingActivations
+from src.initializers import WeightInitializer
+from sklearn.metrics import accuracy_score, log_loss
+from sklearn.preprocessing import OneHotEncoder
 
 
 def softmax(x: np.ndarray) -> np.ndarray:
@@ -8,19 +10,6 @@ def softmax(x: np.ndarray) -> np.ndarray:
     e = np.exp(x - x_max)
     return e / np.sum(e, axis=0, keepdims=True)
 
-
-def one_hot_encode(y: np.ndarray) -> np.ndarray:
-    y_encode = np.zeros([y.size, y.max() + 1])
-    y_encode[np.arange(y.size), y] = 1
-    return y_encode.T
-
-
-def get_pred(output_layer: np.ndarray):
-    return np.argmax(output_layer, axis=0)
-
-
-def get_accuracy(predictions, Y):
-    return np.sum(predictions == Y) / Y.size
 
 
 class NeuralNetwork:
@@ -30,14 +19,16 @@ class NeuralNetwork:
                 "elu": NonSaturatingActivations.elu,
                 "sigmoid": SaturatingActivations.sigmoid,
                 "tanh": SaturatingActivations.tanh,
+                "softmax": lambda z: (softmax(z), lambda dout: dout),  # softmax + cross-entropy
                 "none": lambda z: (z, lambda dout: dout),
                 }
 
-    def __init__(self, layer_dims, activations=None, seed=42):
+    def __init__(self, layer_dims, activations=None, seed=42,Weights_initializer=None):
         self.layer_dims = layer_dims
         self.n_layer = len(layer_dims) - 1
+        self.Weights_initializer = Weights_initializer
         self.seed = seed
-
+        
         if activations is None:
             self.activations = ["none"] + ["relu"] * (self.n_layer - 1) + ["softmax"]
         elif len(activations) == self.n_layer:
@@ -53,15 +44,8 @@ class NeuralNetwork:
         self._initialize_param()
 
     def _initialize_param(self):
-        rng = np.random.default_rng(self.seed)
-        self.W = {}
-        self.b = {}
-
-        for i in range(1, self.n_layer + 1):
-            self.W[i] = rng.random(
-                (self.layer_dims[i], self.layer_dims[i - 1])
-            ) - 0.5
-            self.b[i] = np.zeros((self.layer_dims[i], 1))
+        initializer = WeightInitializer(self.layer_dims, method=self.Weights_initializer, seed=self.seed)
+        self.W, self.b = initializer.initialize()
 
     def _activate(self, Z, name):
         """Apply the named HIDDEN-layer activation to Z. Not for softmax (output layer)."""
@@ -81,7 +65,7 @@ class NeuralNetwork:
         return A[self.n_layer], {"Z": Z, "A": A, "backward": backward}
 
     def _backward(self, y, cache):
-        y_ohe = one_hot_encode(y)
+        y_ohe = self.encoder.transform(y.reshape(-1, 1)).T
         n_samples = y.shape[0]
         dZ = {}
         dW = {}
@@ -105,23 +89,38 @@ class NeuralNetwork:
             self.b[i] -= learning_rate * grads["db"][i]
 
     def fit(self, X, y, X_val=None, y_val=None,
-            learning_rate=0.1, epochs=1000, print_every=10):
-        for i in range(epochs):
-            A_L, cache = self._forward(X)
-            grads = self._backward(y, cache)
-            self._update(grads, learning_rate)
+            learning_rate=0.1, epochs=1000, batch_size=32, print_every=10):
+        n_samples = X.shape[1]  # feature-major: (features, samples)
 
-            if i % print_every == 0:
-                predictions = get_pred(A_L)
-                print("Iteration:", i)
-                print("Accuracy:", get_accuracy(predictions, y))
+        # Initialize OneHotEncoder for y labels
+        self.encoder = OneHotEncoder(sparse_output=False)
+        self.encoder.fit(y.reshape(-1, 1))
+
+        for epoch in range(epochs):
+            # Shuffle mỗi epoch
+            perm = np.random.permutation(n_samples)
+            X_shuffled = X[:, perm]
+            y_shuffled = y[perm]
+
+            # Loop qua từng mini-batch
+            for start in range(0, n_samples, batch_size):
+                end = start + batch_size
+                X_batch = X_shuffled[:, start:end]
+                y_batch = y_shuffled[start:end]
+
+                A_L, cache = self._forward(X_batch)
+                grads = self._backward(y_batch, cache)
+                self._update(grads, learning_rate)
+
+            if epoch % print_every == 0:
+                A_L_full, _ = self._forward(X)
+                predictions = np.argmax(A_L_full, axis=0)
+                print("Epoch:", epoch)
+                print("Accuracy:", accuracy_score(predictions, y))
 
                 if X_val is not None and y_val is not None:
-                    print(f"val_acc: {self.accuracy(X_val, y_val):.4f}")
+                    print(f"val_acc: {accuracy_score(self.predict(X_val), y_val):.4f}")
 
     def predict(self, X):
         A_L, _ = self._forward(X)
-        return get_pred(A_L)
-
-    def accuracy(self, X, y):
-        return get_accuracy(self.predict(X), y)
+        return np.argmax(A_L, axis=0)
