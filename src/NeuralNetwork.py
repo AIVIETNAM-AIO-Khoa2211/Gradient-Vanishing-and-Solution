@@ -200,7 +200,7 @@ class NeuralNetwork:
         X_val=None,
         y_val=None,
         learning_rate=0.1,
-        epochs=1000,
+        epochs=100,
         batch_size=64,
         print_every=10,
     ):
