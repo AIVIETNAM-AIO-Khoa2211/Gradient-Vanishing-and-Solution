@@ -300,13 +300,6 @@ def plot_experiment_summary(
     """Create the four report plots in one 2x2 dashboard."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 9))
     plot_grad_by_layer(histories, epoch=epoch, key=key, ax=axes[0, 0])
-    plot_grad_over_epochs(
-        histories,
-        layer=layer,
-        key=key,
-        metric="layer",
-        ax=axes[0, 1],
-    )
     plot_loss_over_epochs(histories, split=split, ax=axes[1, 0])
     plot_acc_over_epochs(histories, split=split, ax=axes[1, 1])
     fig.tight_layout()
