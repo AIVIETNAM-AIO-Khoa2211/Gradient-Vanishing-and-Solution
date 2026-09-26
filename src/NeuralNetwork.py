@@ -182,7 +182,7 @@ class NeuralNetwork:
                 dA = self.W[i].T @ dZ[i]
                 dZ[i - 1] = cache["backward"][i - 1](dA)
 
-        return {"dW": dW, "db": db, "dgamma": dgamma, "dbeta": dbeta}
+        return {"dW": dW, "db": db, "dgamma": dgamma, "dbeta": dbeta, "dZ": dZ}
 
     def _update(self, grads, learning_rate):
         for i in range(1, self.n_layer + 1):
@@ -192,6 +192,10 @@ class NeuralNetwork:
             if self.use_batchnorm and i < self.n_layer:
                 self.gamma[i] -= learning_rate * grads["dgamma"][i]
                 self.beta[i] -= learning_rate * grads["dbeta"][i]
+
+    @staticmethod
+    def _rms(x):
+        return float(np.sqrt(np.mean(np.square(x))))
 
     def fit(
         self,
@@ -209,6 +213,13 @@ class NeuralNetwork:
         # Initialize OneHotEncoder for y labels
         self.encoder = OneHotEncoder(sparse_output=False)
         self.encoder.fit(y.reshape(-1, 1))
+
+        # Khởi tạo history
+        self.history = {
+            "epoch": [], "train_loss": [], "val_loss": [],
+            "train_acc": [], "val_acc": [], "dW_rms": [], "dZ_rms": [],
+        }
+    
 
         for epoch in range(epochs):
             # Shuffle mỗi epoch
@@ -228,14 +239,42 @@ class NeuralNetwork:
 
                 grads = self._backward(y_batch, cache)
                 self._update(grads, learning_rate)
+                last_grads = grads # dùng batch cuối để log gradient
 
-            if epoch % print_every == 0:
+            #Get thing to history
+
+            A_L_full, _ = self._forward(X, mode="test")
+            predictions = np.argmax(A_L_full, axis=0)
+            y_ohe_full = self.encoder.transform(y.reshape(-1, 1))
+
+            train_loss = log_loss(y_ohe_full, A_L_full.T)
+            train_acc = accuracy_score(predictions, y)
+
+            dW_rms = [self._rms(last_grads["dW"][i]) for i in range(1, self.n_layer + 1)]
+            dZ_rms = [self._rms(last_grads["dZ"][i]) for i in range(1, self.n_layer + 1)]
+
+            self.history["epoch"].append(epoch)
+            self.history["train_loss"].append(train_loss)
+            self.history["train_acc"].append(train_acc)
+            self.history["dW_rms"].append(dW_rms)
+            self.history["dZ_rms"].append(dZ_rms)
+
+            # THIẾU đoạn này — cần thêm:
+            if X_val is not None and y_val is not None:
+                A_val, _ = self._forward(X_val, mode="test")
+                y_ohe_val = self.encoder.transform(y_val.reshape(-1, 1))
+                self.history["val_loss"].append(log_loss(y_ohe_val, A_val.T))
+                self.history["val_acc"].append(accuracy_score(np.argmax(A_val, axis=0), y_val))
+
+            #print
+
+            if epoch % print_every == print_every - 1:
                 # 2. THÊM mode='test' VÀO ĐÂY
                 # Đánh giá trên toàn bộ tập X phải dùng running_mean và running_var đã lưu
                 A_L_full, _ = self._forward(X, mode="test")
                 predictions = np.argmax(A_L_full, axis=0)
 
-                print("Epoch:", epoch)
+                print("Epoch:", epoch + 1)
                 print("Accuracy:", accuracy_score(predictions, y))
 
                 if X_val is not None and y_val is not None:
@@ -243,6 +282,10 @@ class NeuralNetwork:
                     print(
                         f"val_acc: {accuracy_score(self.predict(X_val), y_val):.4f}"
                     )
+
+    def get_history(self):
+        """Trả về history dưới dạng numpy arrays, sẵn sàng cho plot_comparisons.py."""
+        return {k: np.asarray(v) for k, v in self.history.items()}
 
     def predict(self, X):
         A_L, _ = self._forward(X, mode="test")  # CHÚ Ý TRUYỀN mode='test'

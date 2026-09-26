@@ -11,7 +11,7 @@ class WeightInitializer:
         self.layer_dims = layer_dims
         self.rng = np.random.default_rng(seed)
 
-    def random_normal(self, n_in, n_out, scale=0.01):
+    def random_normal(self, n_in, n_out, scale=0.1):
         return self.rng.standard_normal((n_out, n_in)) * scale
 
     def xavier_normal(self, n_in, n_out):
