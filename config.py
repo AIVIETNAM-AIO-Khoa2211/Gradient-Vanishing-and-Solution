@@ -29,6 +29,7 @@ LAYER_SIZES = [INPUT_DIM] + [HIDDEN_DIM] * (NUM_LAYERS - 1) + [OUTPUT_DIM]
 # index 1..NUM_LAYERS-1 = hidden activation (mặc định sigmoid để dễ gây vanishing)
 # index NUM_LAYERS      = output activation (softmax)
 ACTIVATIONS = [None] + ["sigmoid"] * (NUM_LAYERS - 1) + ["softmax"]
+PIPELINE1 = [None] + ["leaky_relu"] * (NUM_LAYERS - 1) + ["softmax"]
 
 # ============================================================
 # TRAINING HYPERPARAMETERS
@@ -39,14 +40,15 @@ NUM_EPOCHS = 50
 SEED = 42  # cố định để so sánh công bằng giữa các solution
 
 # ============================================================
+# LOGGING / EXPERIMENT TRACKING
+# ============================================================
+LOG_DIR = ROOT_DIR / "logs"
+SAVE_GRADIENT_NORMS = True     # lưu gradient norm theo layer mỗi epoch
+SAVE_ACTIVATION_STATS = True   # lưu mean/variance activation theo layer
+
+# ============================================================
 # WEIGHT INITIALIZATION
 # ============================================================
-# Chọn phương pháp khởi tạo:  "random" (để test), "xavier" (cho sigmoid/tanh), "he" (cho relu), "he_leaky"
-INIT_METHOD = "xavier"
-# thêm negative slope nếu dùng He Initialization nếu dùng LeakyReLU
-NEGATIVE_SLOPE = 0.01
-
-#Điền vào nếu có những tham số cố định của phương pháp khởi tạo trọng số (weight initialization) cần sử dụng.
 
 # ============================================================
 # BATCH NORMALIZATION
@@ -58,10 +60,5 @@ NEGATIVE_SLOPE = 0.01
 # GRADIENT CLIPPING
 # ============================================================
 
+#Điền vào nếu có những tham số cố định của phương pháp cắt gradient (gradient clipping) cần sử dụng.
 
-# ============================================================
-# LOGGING / EXPERIMENT TRACKING
-# ============================================================
-LOG_DIR = ROOT_DIR / "logs"
-SAVE_GRADIENT_NORMS = True     # lưu gradient norm theo layer mỗi epoch
-SAVE_ACTIVATION_STATS = True   # lưu mean/variance activation theo layer
