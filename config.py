@@ -274,7 +274,7 @@ EXPERIMENTS = {
     "leaky_he": {
         "name": "LeakyReLU + He Initialization",
         "activations": LEAKY_RELU_ACTIVATIONS,
-        "initializer": "he_normal",
+        "initializer": "he_normal_leaky",
         "use_batchnorm": False,
     },
     # --------------------------------------------------------
@@ -282,10 +282,10 @@ EXPERIMENTS = {
     #
     # Add Batch Normalization.
     # --------------------------------------------------------
-    "leaky_he_batchnorm": {
-        "name": "LeakyReLU + He + BatchNorm",
-        "activations": LEAKY_RELU_ACTIVATIONS,
-        "initializer": "he_normal",
+    "batchnorm": {
+        "name": "Basline + BatchNorm",
+        "activations": SIGMOID_ACTIVATIONS,
+        "initializer": "random_normal",
         "use_batchnorm": True,
     },
 }
@@ -300,5 +300,5 @@ EXPERIMENT_ORDER = (
     "he_sigmoid",
     "leaky_random",
     "leaky_he",
-    "leaky_he_batchnorm",
+    "batchnorm",
 )
